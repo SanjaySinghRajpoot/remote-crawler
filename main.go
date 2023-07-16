@@ -6,23 +6,13 @@ import (
 	"github.com/gocolly/colly"
 )
 
+type Job struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	URL         string `json:"url"`
+}
+
 func main() {
-
-	// scrapeUrl := "https://himalayas.app/jobs"
-
-	// c := colly.NewCollector(colly.AllowedDomains("https://himalayas.app/jobs", "himalayas.app/jobs"))
-
-	// fmt.Println("-----w----")
-	// // Find and visit all links
-	// c.OnRequest(func(r *colly.Request) {
-	// 	fmt.Println("Visiting", r.URL)
-	// })
-
-	// c.OnHTML("span.sr-only", func(e *colly.HTMLElement) {
-	// 	fmt.Println(e.Text)
-	// })
-
-	// c.Visit(scrapeUrl)
 
 	c := colly.NewCollector()
 
@@ -30,14 +20,28 @@ func main() {
 		fmt.Println("Visiting", r.URL)
 	})
 
-	// Find and visit all links
-	// c.OnHTML("a", func(e *colly.HTMLElement) {
-	// 	e.Request.Visit(e.Attr("href"))
-	// })
+	// var tempJob []Job
 
-	c.OnHTML("h2.text-xl font-medium text-gray-900", func(h *colly.HTMLElement) {
-		fmt.Println(h.Text)
+	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		// Print link
+		url := fmt.Sprintf("https://himalayas.app%s", link)
+
+		name := e.ChildText("h2.text-xl.font-medium.text-gray-900")
+		if name != "" {
+
+			saveJob := Job{
+				Name:        name,
+				Description: "",
+				URL:         url,
+			}
+
+			fmt.Print(saveJob)
+			fmt.Println("")
+		}
 	})
 
-	c.Visit("https://himalayas.app/jobs")
+	// on Pagination handle this function
+
+	c.Visit("https://himalayas.app/jobs/developer")
 }
