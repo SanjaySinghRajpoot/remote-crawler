@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 
+	"github.com/SanjaySinghRajpoot/remote-crawler/config"
+	"github.com/SanjaySinghRajpoot/remote-crawler/routes"
+	"github.com/gin-gonic/gin"
 	"github.com/gocolly/colly"
 )
 
@@ -41,7 +44,11 @@ func main() {
 		}
 	})
 
-	// on Pagination handle this function
-
 	c.Visit("https://himalayas.app/jobs/developer")
+
+	// starting the golang server
+	router := gin.New()
+	config.Connect()
+	routes.UserRoute(router)
+	router.Run(":8080")
 }
