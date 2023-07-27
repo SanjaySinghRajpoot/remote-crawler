@@ -1,51 +1,73 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/SanjaySinghRajpoot/remote-crawler/config"
+	"github.com/SanjaySinghRajpoot/remote-crawler/models"
 	"github.com/SanjaySinghRajpoot/remote-crawler/routes"
 	"github.com/gin-gonic/gin"
+	"github.com/gocolly/colly"
 )
 
-type Job struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	URL         string `json:"url"`
-}
+var cnt = 10
 
 func main() {
 
-	// c := colly.NewCollector()
+	config.Connect()
 
-	// c.OnRequest(func(r *colly.Request) {
-	// 	fmt.Println("Visiting", r.URL)
-	// })
+	c := colly.NewCollector()
 
-	// // var tempJob []Job
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("Visiting", r.URL)
+	})
 
-	// c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-	// 	link := e.Attr("href")
-	// 	// Print link
-	// 	url := fmt.Sprintf("https://himalayas.app%s", link)
+	// var tempJob []Job
 
-	// 	name := e.ChildText("h2.text-xl.font-medium.text-gray-900")
-	// 	if name != "" {
+	tempjobs := make([]models.Job, 0)
 
-	// 		saveJob := Job{
-	// 			Name:        name,
-	// 			Description: "",
-	// 			URL:         url,
-	// 		}
+	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		// Print link
+		url := fmt.Sprintf("https://himalayas.app%s", link)
 
-	// 		fmt.Print(saveJob)
-	// 		fmt.Println("")
-	// 	}
-	// })
+		name := e.ChildText("h2.text-xl.font-medium.text-gray-900")
+		if name != "" && cnt != 0 {
 
-	// c.Visit("https://himalayas.app/jobs/developer")
+			saveJob := models.Job{
+				Name:        name,
+				Description: "",
+				URL:         url,
+			}
+
+			fmt.Print(saveJob)
+
+			tempjobs = append(tempjobs, saveJob)
+
+			cnt--
+		}
+	})
+
+	c.Visit("https://himalayas.app/jobs/developer")
+
+	for _, r := range tempjobs {
+
+		save := models.Job{
+			Name:        r.Name,
+			Description: r.Description,
+			URL:         r.URL,
+		}
+
+		result := config.DB.Create(&save)
+
+		if result.Error != nil {
+			fmt.Println("error")
+			return
+		}
+	}
 
 	// starting the golang server
 	router := gin.New()
-	config.Connect()
 	routes.UserRoute(router)
 	router.Run(":8080")
 }
