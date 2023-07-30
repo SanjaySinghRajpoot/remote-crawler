@@ -10,10 +10,10 @@ func UserController(c *gin.Context) {
 
 	// user := make([]models.Users, 0)
 
-	users := []models.Job{}
-	config.DB.Find(&users)
+	jobs := []models.Job{}
+	config.DB.Find(&jobs)
 
-	c.JSON(200, &users)
+	c.JSON(200, &jobs)
 }
 
 func PostUserController(c *gin.Context) {
