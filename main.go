@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -12,9 +13,21 @@ import (
 	"github.com/dghubble/oauth1"
 	"github.com/gin-gonic/gin"
 	"github.com/gocolly/colly"
+	"github.com/joho/godotenv"
 )
 
 var cnt = 10
+
+func goGetEnv(key string) string {
+
+	err := godotenv.Load(".env")
+
+	if err != nil {
+		log.Fatal("Error, unable to load the .env file")
+	}
+
+	return os.Getenv(key)
+}
 
 // need a CRON Job for 24 hours set
 func runCronJobs() {
@@ -72,10 +85,10 @@ func runCronJobs() {
 
 func sendTweeet(tweet string) {
 
-	consumerKey := "Xco09OE6ivMarRZTaSxVXdoDX"
-	consumerSecret := "tFWo5bYLSRc5F2BXAhaMrA8qVO3MgAXRzQfhNmiEm2QPCgK1w8"
-	accessToken := "1690419507049975808-rtvJQhkVYAM9eLASFoTJVOS1VEirZs"
-	accessSecret := "JyC1RbZQq0ErQM6mX2XmjDuIejuXVq8bur0MNk0xf8S6V"
+	consumerKey := goGetEnv("ConsumerKey")
+	consumerSecret := goGetEnv("ConsumerSecret")
+	accessToken := goGetEnv("AccessToken")
+	accessSecret := goGetEnv("AccessSecret")
 	// prompt := os.Getenv("PROMPT")
 
 	if consumerKey == "" || consumerSecret == "" || accessToken == "" || accessSecret == "" {

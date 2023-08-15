@@ -1,7 +1,13 @@
 ### Remote Crawler 
 
+A Web crawler that look for remote jobs and convert them into tweets. 
 
-- add support for multiples sites
+## Tech Stack
+- Golang 
+- Gin Framework
+- Docker, Docker Compose
+- Postgres, GORM
+- REST APIs
 
-
-- use nodemon --exec "go run" main.go for hot reloading
+## Want to Contribute 
+Feel Free to create new issues and raise PR's
