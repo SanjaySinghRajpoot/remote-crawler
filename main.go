@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gocolly/colly"
 	"github.com/joho/godotenv"
+	"gopkg.in/robfig/cron.v2"
 )
 
 var cnt = 10
@@ -140,19 +141,25 @@ func getTweetFromDB() {
 
 }
 
+// Things to add ------------------------
+// URL shortner
+// description shortener
+// check for valid link and description -> shorten them as per need
+// Make a valid Tweet format that can be used for view level
+
 func main() {
 
 	config.Connect()
 
-	// cronJob := cron.New()
+	cronJob := cron.New()
 
-	// cronJob.AddFunc("@every 1s", func() {
-	// 	runCronJobs()
-	// })
+	cronJob.AddFunc("@every 1s", func() {
+		runCronJobs()
+	})
 
-	// cronJob.Start()
+	cronJob.Start()
 
-	// fmt.Scanln()
+	fmt.Scanln()
 
 	getTweetFromDB()
 
