@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -30,58 +32,96 @@ func goGetEnv(key string) string {
 	return os.Getenv(key)
 }
 
+func getShortUrl(url string) string {
+
+	baseUrl := "http://tinyurl.com/api-create.php?url="
+	urlToShorten := url
+	getReqUrl := baseUrl + urlToShorten
+
+	response, err := http.Get(getReqUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// read response body
+	body, error := io.ReadAll(response.Body)
+	if error != nil {
+		fmt.Println(error)
+	}
+
+	defer response.Body.Close()
+	return string(body)
+}
+
 // need a CRON Job for 24 hours set
 func runCronJobs() {
 
-	c := colly.NewCollector()
+	// https://himalayas.app/jobs/developer
+
+	baseURL := "www.himalayas.app"
+
+	startingURL := "https://" + baseURL
+
+	// url := []string{baseURL}
+
+	c := colly.NewCollector(colly.AllowedDomains(), colly.Async(true))
+
+	// Set the concurrency limit
+	c.Limit(&colly.LimitRule{DomainGlob: "*", Parallelism: 2})
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting", r.URL)
 	})
 
-	tempjobs := make([]models.Job, 0)
+	c.OnError(func(_ *colly.Response, err error) {
+
+		log.Println("Something went wrong:", err)
+
+	})
+
+	c.OnResponse(func(r *colly.Response) {
+
+		fmt.Println("Visited", r.Request.URL)
+
+	})
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+
 		link := e.Attr("href")
+
+		e.Request.Visit(e.Attr("href"))
+
 		// Print link
 		url := fmt.Sprintf("https://himalayas.app%s", link)
 
+		// get the shorted link
+		shortedUrl := getShortUrl(url)
+
 		name := e.ChildText("h2.text-xl.font-medium.text-gray-900")
-		if name != "" && cnt != 0 {
 
-			saveJob := models.Job{
-				Name:        name,
-				Description: "",
-				URL:         url,
-			}
-
-			fmt.Print(saveJob)
-
-			tempjobs = append(tempjobs, saveJob)
-
-			cnt--
-		}
-	})
-
-	c.Visit("https://himalayas.app/jobs/developer")
-
-	for _, r := range tempjobs {
-
-		save := models.Job{
-			Name:        r.Name,
-			Description: r.Description,
-			URL:         r.URL,
+		saveJob := models.Job{
+			Name:        name,
+			Description: "",
+			URL:         shortedUrl,
 		}
 
-		result := config.DB.Create(&save)
+		result := config.DB.Where(models.Job{URL: shortedUrl}).FirstOrCreate(&saveJob)
 
 		if result.Error != nil {
 			fmt.Println("error")
 			return
 		}
-	}
 
-	fmt.Println("himalayas website crawl")
+	})
+
+	fmt.Println("Starting crawl at: ", startingURL)
+
+	if err := c.Visit(startingURL); err != nil {
+
+		fmt.Println("Error on start of crawl: ", err)
+
+	}
+	c.Wait()
 }
 
 func sendTweeet(tweet string) {
@@ -122,7 +162,7 @@ func sendTweeet(tweet string) {
 	defer response.Body.Close()
 	log.Printf("Response was OK: %v", response)
 
-	fmt.Println("tweet was succesfull")
+	fmt.Println("tweet was successfully")
 }
 
 func getTweetFromDB() {
@@ -142,10 +182,11 @@ func getTweetFromDB() {
 }
 
 // Things to add ------------------------
-// URL shortner
-// description shortener
+// URL shortner - Done
+// description shortener - Working on this
 // check for valid link and description -> shorten them as per need
 // Make a valid Tweet format that can be used for view level
+// Add test cases to this project
 
 func main() {
 
@@ -161,7 +202,7 @@ func main() {
 
 	fmt.Scanln()
 
-	getTweetFromDB()
+	// getTweetFromDB()
 
 	// starting the golang server
 	router := gin.New()
