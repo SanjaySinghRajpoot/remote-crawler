@@ -9,11 +9,16 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Each job will run on a Runner Machine the type of the runner machine is mentioned below
+# All the jobs are run in parallel by default if no condition is specified  Ex: need: build will make the job dependent on build
+# Steps - A job can have multiple steps that can be executed one by one Serially
+# Action - This will act like a standlone command which are ran Serially
 jobs:
 
   build:
     runs-on: ubuntu-latest
     steps:
+    # checkout the code return in the repo -> this step is already written by the Github team we will just use the same here
     - uses: actions/checkout@v3
 
     - name: Set up Go
