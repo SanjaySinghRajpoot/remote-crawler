@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -18,6 +19,32 @@ import (
 	"github.com/joho/godotenv"
 	"gopkg.in/robfig/cron.v2"
 )
+
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type Choice struct {
+	Index        int     `json:"index"`
+	Message      Message `json:"message"`
+	FinishReason string  `json:"finish_reason"`
+}
+
+type Usage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
+}
+
+type ChatCompletionResponse struct {
+	ID      string   `json:"id"`
+	Object  string   `json:"object"`
+	Created int64    `json:"created"`
+	Model   string   `json:"model"`
+	Choices []Choice `json:"choices"`
+	Usage   Usage    `json:"usage"`
+}
 
 var cnt = 10
 
@@ -165,6 +192,60 @@ func sendTweeet(tweet string) {
 	fmt.Println("tweet was successfully")
 }
 
+func makeTweetUsingGPT(tweet models.Job) string {
+
+	client := &http.Client{}
+	var data = strings.NewReader(fmt.Sprintf(`{
+		"model": "gpt-3.5-turbo",
+		"messages": [
+		  {
+			"role": "system",
+			"content": "You will be provided with a job title, and your task is to create a attractive tweet using the job title with 270 characters limit"
+		  },
+		  {
+			"role": "user",
+			"content": "%s"
+		  }
+		],
+		"temperature": 0,
+		"max_tokens": 256,
+		"top_p": 1,
+		"frequency_penalty": 0,
+		"presence_penalty": 0
+     }`, tweet.Name))
+	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	openAIKey := goGetEnv("OPEN_AI_KEY")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+openAIKey)
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var responseObj ChatCompletionResponse
+
+	unmarshalError := json.Unmarshal([]byte(bodyText), &responseObj)
+	if unmarshalError != nil {
+		fmt.Println("Error:", err)
+		return ""
+	}
+
+	return responseObj.Choices[0].Message.Content
+}
+
 func getTweetFromDB() {
 
 	jobs := []models.Job{}
@@ -174,7 +255,9 @@ func getTweetFromDB() {
 
 		// tweet := fmt.Sprintf("Name: %s \n , Description: %s, \n link: %s", job.Name, job.Description, job.URL)
 
-		tweet := fmt.Sprintf("Name: %s ", job.Name)
+		// tweet := fmt.Sprintf("Name: %s ", job.Name)
+
+		tweet := makeTweetUsingGPT(job)
 
 		sendTweeet(tweet)
 	}
@@ -183,7 +266,7 @@ func getTweetFromDB() {
 
 // Things to add ------------------------
 // URL shortner - Done
-// description shortener - Working on this
+// description shortener - Working on this -> use chat gpt APIs for this
 // check for valid link and description -> shorten them as per need
 // Make a valid Tweet format that can be used for view level
 // Add test cases to this project
