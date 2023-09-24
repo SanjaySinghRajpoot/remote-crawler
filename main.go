@@ -253,10 +253,6 @@ func getTweetFromDB() {
 
 	for _, job := range jobs {
 
-		// tweet := fmt.Sprintf("Name: %s \n , Description: %s, \n link: %s", job.Name, job.Description, job.URL)
-
-		// tweet := fmt.Sprintf("Name: %s ", job.Name)
-
 		tweet := makeTweetUsingGPT(job)
 
 		sendTweeet(tweet)
@@ -264,28 +260,20 @@ func getTweetFromDB() {
 
 }
 
-// Things to add ------------------------
-// URL shortner - Done
-// description shortener - Working on this -> use chat gpt APIs for this
-// check for valid link and description -> shorten them as per need
-// Make a valid Tweet format that can be used for view level
-// Add test cases to this project
-
 func main() {
 
 	config.Connect()
 
 	cronJob := cron.New()
 
-	cronJob.AddFunc("@every 1s", func() {
+	// Cron Job set up to run on Weekly basis
+	cronJob.AddFunc("@weekly", func() {
 		runCronJobs()
 	})
 
 	cronJob.Start()
 
-	fmt.Scanln()
-
-	// getTweetFromDB()
+	getTweetFromDB()
 
 	// starting the golang server
 	router := gin.New()
