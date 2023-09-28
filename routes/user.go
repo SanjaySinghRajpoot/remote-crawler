@@ -7,5 +7,5 @@ import (
 
 func UserRoute(router *gin.Engine) {
 	router.GET("/", controller.UserController)
-	router.POST("/create", controller.PostUserController)
+	router.POST("/test", controller.TestUserController)
 }

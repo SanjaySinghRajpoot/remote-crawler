@@ -16,7 +16,7 @@ func UserController(c *gin.Context) {
 	c.JSON(200, &jobs)
 }
 
-func PostUserController(c *gin.Context) {
+func TestUserController(c *gin.Context) {
 
-	c.String(200, "hello world")
+	c.String(200, "status working")
 }

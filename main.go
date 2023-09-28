@@ -273,7 +273,7 @@ func main() {
 
 	cronJob.Start()
 
-	getTweetFromDB()
+	// getTweetFromDB()
 
 	// starting the golang server
 	router := gin.New()
